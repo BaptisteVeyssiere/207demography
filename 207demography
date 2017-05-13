@@ -1,0 +1,113 @@
+#!/usr/bin/ruby -w
+# coding: utf-8
+
+require 'csv'
+
+if ARGV.length < 1 or ARGV[0] == "-h"
+  print "USAGE\n\t\t./207demography code1 [...]\n\nDESCRIPTION\n\t\tcode1\tcountry code\n"
+  exit(84)
+end
+code = ARGV[0]
+if code !~ /^[a-zA-Z]+$/
+  print "Invalid code\n"
+  exit(84)
+end
+array = CSV.read("./207demography_data.csv", :headers=>true, :col_sep=>?;)
+for i in 0..ARGV.length-1
+  if ((array['Country Code'].include? ARGV[i]) == false)
+    print "Invalid country code : #{ARGV[i]}"
+    exit 84
+  end
+end
+print "country:"
+for i in 0..ARGV.length-1
+  country = array['Country Name'][array['Country Code'].index(ARGV[i])]
+  print " #{country}"
+  if i < ARGV.length-1
+    print ','
+  else
+    print "\n"
+  end
+end
+
+n = 51
+
+$vectorx = (1961..2011).to_a
+$vectory = Array.new(n)
+for i in 0..n-1
+  $vectory[i] = 0
+end
+for i in 0..ARGV.length-1
+  for j in 0..n-1
+    $vectory[j] += array[$vectorx[j].to_s][array['Country Code'].index(ARGV[i])].to_f
+  end
+end
+for i in 0..n-1
+  $vectory[i] /= 1000000.0
+end
+
+$Mx = 0
+$My = 0
+for i in 0..n-1
+  $Mx += ($vectorx[i].to_f / n.to_f)
+  $My += ($vectory[i].to_f / n.to_f)
+end
+
+$cov = 0
+for i in 0..n-1
+  $cov += (($vectorx[i] - $Mx) * ($vectory[i] - $My))
+end
+$cov /= n
+
+$var = 0
+for i in 0..n-1
+  $var += $vectorx[i] ** 2
+end
+$var = $var / n - $Mx ** 2
+
+$b = $cov / $var
+$a = $My - $b * $Mx
+if $a >= 0
+  printf("fit 1\n\tY = %.2f X + %.2f\n", $b, $a)
+else
+  printf("fit 1\n\tY = %.2f X - %.2f\n", $b, -$a)
+end
+
+$std = 0
+for i in 0..n-1
+  $e = $vectory[i] - $a - $b * $vectorx[i]
+  $std += $e ** 2
+end
+$std = Math.sqrt($std / n)
+printf("\tstandard deviation:\t%.2f\n", $std)
+
+$population = $a + 2050 * $b
+printf("\tpopulation in 2050:\t%.2f\n", $population)
+
+$var = 0
+for i in 0..n-1
+  $var += $vectory[i] ** 2
+end
+$var = $var / n - $My ** 2
+
+$b = $cov / $var
+$a = $Mx - $b * $My
+if $a >= 0
+  printf("fit 2\n\tX = %.2f Y + %.2f\n", $b, $a)
+else
+  printf("fit 2\n\tX = %.2f Y - %.2f\n", $b, -$a)
+end
+
+$std2 = 0
+for i in 0..n-1
+  $e = $vectory[i] - ($vectorx[i] - $a) / $b
+  $std2 += $e ** 2
+end
+$std2 = Math.sqrt($std2 / n)
+printf("\tstandard deviation:\t%.2f\n", $std2)
+
+$population = (2050 - $a) / $b
+printf("\tpopulation in 2050:\t%.2f\n", $population)
+
+$correlation = Math.sqrt(1 - (($std ** 2) / $var))
+printf("correlation: %.4f\n", $correlation)
