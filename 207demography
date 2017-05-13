@@ -66,7 +66,7 @@ end
 $var = $var / n - $Mx ** 2
 
 $b = $cov / $var
-$a = $My - $b * $Mx
+$a = $My - ($b * $Mx)
 if $a >= 0
   printf("fit 1\n\tY = %.2f X + %.2f\n", $b, $a)
 else
