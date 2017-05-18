@@ -63,7 +63,7 @@ $var = 0
 for i in 0..n-1
   $var += $vectorx[i] ** 2
 end
-$var = $var / n - $Mx ** 2
+$var = $var / n.to_f - $Mx ** 2
 
 $b = $cov / $var
 $a = $My - ($b * $Mx)
